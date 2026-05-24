@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratório Semana 3 — Vibe Code School</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --navy:#0A1628;
+  --blue:#4F8EF7;
+  --accent:#4F8EF7;
+  --blue-light:#7AAEF8;
+  --glass:rgba(255,255,255,0.04);
+  --glass-border:rgba(79,142,247,0.2);
+  --text-primary:#F0F4FF;
+  --text-secondary:#8A9FCC;
+  --text-muted:#4A5A7A;
+}
+html{scroll-behavior:smooth;}
+body{background:#0A1628;font-family:'Space Grotesk',sans-serif;color:var(--text-primary);min-height:100vh;overflow-x:hidden;position:relative;}
+canvas#mesh{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:0.5;pointer-events:none;}
+.glow-orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0;}
+.glow-tl{width:500px;height:500px;top:-150px;left:-100px;background:radial-gradient(circle,rgba(79,142,247,0.15) 0%,transparent 70%);}
+.glow-br{width:600px;height:600px;bottom:-200px;right:-150px;background:radial-gradient(circle,rgba(79,142,247,0.1) 0%,transparent 70%);}
+.container{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:52px 28px 80px;}
+/* header */
+.header{text-align:center;margin-bottom:52px;animation:fadeDown 0.6s ease both;}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:24px;}
+.logo-text{font-size:13px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--blue-light);opacity:0.8;}
+.week-pill{display:inline-block;background:rgba(79,142,247,0.12);border:0.5px solid rgba(79,142,247,0.3);border-radius:100px;padding:5px 16px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue-light);margin-bottom:14px;}
+.header h1{font-family:'Playfair Display',serif;font-size:clamp(24px,4.5vw,38px);font-weight:700;line-height:1.2;margin-bottom:10px;}
+.header h1 span{color:var(--blue);}
+.header p{font-size:14px;color:var(--text-secondary);max-width:500px;margin:0 auto;line-height:1.65;}
+/* progress */
+.prog-wrap{background:rgba(255,255,255,0.05);border:0.5px solid rgba(79,142,247,0.2);border-radius:100px;height:5px;margin:28px auto 6px;max-width:340px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,#2a5fd4,#4F8EF7,#7AAEF8);transition:width 0.45s cubic-bezier(.4,0,.2,1);width:0%;box-shadow:0 0 10px rgba(79,142,247,0.45);}
+.prog-label{text-align:center;font-size:11px;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:0;}
+.prog-label span{color:var(--blue-light);font-weight:600;}
+/* sections */
+.section-label{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin:40px 0 14px;padding-left:4px;}
+.questions{display:flex;flex-direction:column;gap:14px;}
+/* question card */
+.q-card{background:var(--glass);border:0.5px solid var(--glass-border);border-radius:14px;overflow:hidden;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:border-color 0.25s;}
+.q-card:hover{border-color:rgba(79,142,247,0.38);}
+.q-head{display:flex;align-items:flex-start;gap:14px;padding:18px 20px;cursor:pointer;user-select:none;}
+.q-num{flex-shrink:0;width:28px;height:28px;border-radius:8px;background:rgba(79,142,247,0.12);border:0.5px solid rgba(79,142,247,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue-light);margin-top:1px;}
+.q-text{flex:1;font-size:14px;line-height:1.6;color:var(--text-secondary);font-weight:400;}
+.q-type{flex-shrink:0;font-size:10px;padding:3px 8px;border-radius:100px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-top:3px;}
+.q-type.teoria{background:rgba(79,142,247,0.1);color:var(--blue-light);border:0.5px solid rgba(79,142,247,0.2);}
+.q-type.pratica{background:rgba(122,174,248,0.08);color:#9FC5FA;border:0.5px solid rgba(122,174,248,0.2);}
+/* options */
+.q-options{padding:0 20px 16px 62px;display:flex;flex-direction:column;gap:7px;}
+.opt{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:9px;cursor:pointer;transition:background 0.18s;border:0.5px solid transparent;}
+.opt:hover{background:rgba(79,142,247,0.07);}
+.opt.selected{background:rgba(79,142,247,0.1);border-color:rgba(79,142,247,0.3);}
+.opt.correct{background:rgba(79,200,120,0.1);border-color:rgba(79,200,120,0.35);}
+.opt.wrong{background:rgba(220,80,80,0.08);border-color:rgba(220,80,80,0.25);}
+.opt-circle{flex-shrink:0;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;transition:all 0.18s;}
+.opt.selected .opt-circle{border-color:var(--blue);background:var(--blue);color:#fff;}
+.opt.correct .opt-circle{border-color:#4fc878;background:#4fc878;color:#fff;}
+.opt.wrong .opt-circle{border-color:#dc5050;background:#dc5050;color:#fff;}
+.opt-text{font-size:13px;color:var(--text-secondary);line-height:1.4;}
+.opt.correct .opt-text{color:#7de0a0;}
+.opt.wrong .opt-text{color:#e08080;}
+/* feedback */
+.q-feedback{margin:0 20px 16px 62px;padding:10px 14px;border-radius:9px;font-size:12px;line-height:1.55;display:none;}
+.q-feedback.show{display:block;}
+.q-feedback.ok{background:rgba(79,200,120,0.08);border:0.5px solid rgba(79,200,120,0.25);color:#7de0a0;}
+.q-feedback.err{background:rgba(220,80,80,0.08);border:0.5px solid rgba(220,80,80,0.25);color:#e08080;}
+/* open question */
+.q-open{padding:0 20px 18px 62px;}
+.q-open textarea{width:100%;background:rgba(255,255,255,0.04);border:0.5px solid rgba(79,142,247,0.2);border-radius:10px;color:var(--text-primary);font-family:'Space Grotesk',sans-serif;font-size:13px;line-height:1.6;padding:12px 14px;resize:vertical;min-height:90px;outline:none;transition:border-color 0.2s;}
+.q-open textarea:focus{border-color:rgba(79,142,247,0.5);}
+.q-open textarea::placeholder{color:var(--text-muted);}
+.q-open .save-btn{margin-top:8px;background:rgba(79,142,247,0.12);border:0.5px solid rgba(79,142,247,0.3);color:var(--blue-light);font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;padding:7px 16px;border-radius:8px;cursor:pointer;transition:background 0.2s;letter-spacing:0.04em;}
+.q-open .save-btn:hover{background:rgba(79,142,247,0.2);}
+.q-open .saved-indicator{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#7de0a0;margin-left:10px;opacity:0;transition:opacity 0.3s;}
+.q-open .saved-indicator.show{opacity:1;}
+/* practical */
+.practical-card{background:var(--glass);border:0.5px solid rgba(79,142,247,0.3);border-radius:14px;padding:24px;backdrop-filter:blur(10px);margin-top:14px;}
+.practical-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.practical-icon{width:36px;height:36px;border-radius:10px;background:rgba(79,142,247,0.15);border:0.5px solid rgba(79,142,247,0.3);display:flex;align-items:center;justify-content:center;}
+.practical-title{font-size:16px;font-weight:700;color:var(--text-primary);}
+.practical-subtitle{font-size:12px;color:var(--text-muted);margin-top:1px;}
+.practical-desc{font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:16px;}
+.practical-desc strong{color:var(--text-primary);font-weight:600;}
+.practical-card textarea{width:100%;background:rgba(255,255,255,0.04);border:0.5px solid rgba(79,142,247,0.2);border-radius:10px;color:var(--text-primary);font-family:'Space Grotesk',sans-serif;font-size:13px;line-height:1.65;padding:14px;resize:vertical;min-height:140px;outline:none;transition:border-color 0.2s;}
+.practical-card textarea:focus{border-color:rgba(79,142,247,0.5);}
+.practical-card textarea::placeholder{color:var(--text-muted);}
+.practical-actions{display:flex;align-items:center;margin-top:10px;gap:0;}
+.submit-btn{background:linear-gradient(135deg,rgba(79,142,247,0.25),rgba(79,142,247,0.12));border:0.5px solid rgba(79,142,247,0.4);color:var(--blue-light);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;padding:10px 22px;border-radius:9px;cursor:pointer;transition:all 0.2s;letter-spacing:0.04em;}
+.submit-btn:hover{background:linear-gradient(135deg,rgba(79,142,247,0.35),rgba(79,142,247,0.2));border-color:rgba(79,142,247,0.6);}
+.submit-confirm{display:none;margin-top:12px;padding:10px 14px;background:rgba(79,200,120,0.06);border:0.5px solid rgba(79,200,120,0.2);border-radius:9px;}
+.submit-confirm.show{display:block;}
+/* footer */
+.footer{text-align:center;margin-top:52px;padding-top:28px;border-top:0.5px solid rgba(79,142,247,0.1);}
+.footer p{font-size:12px;color:var(--text-muted);letter-spacing:0.04em;}
+.footer strong{color:var(--blue-light);font-weight:600;}
+/* animations */
+@keyframes fadeDown{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.q-card{animation:fadeUp 0.5s ease both;}
+.q-card:nth-child(1){animation-delay:0.05s;} .q-card:nth-child(2){animation-delay:0.10s;} .q-card:nth-child(3){animation-delay:0.15s;} .q-card:nth-child(4){animation-delay:0.20s;} .q-card:nth-child(5){animation-delay:0.25s;} .q-card:nth-child(6){animation-delay:0.30s;} .q-card:nth-child(7){animation-delay:0.35s;} .q-card:nth-child(8){animation-delay:0.40s;} .q-card:nth-child(9){animation-delay:0.45s;} .q-card:nth-child(10){animation-delay:0.50s;}
+@media(max-width:500px){.container{padding:32px 14px 60px;}.q-options{padding:0 14px 14px 14px;}.q-open{padding:0 14px 14px 14px;}.q-head{padding:14px;}}
+</style>
+</head>
+<body>
+<canvas id="mesh"></canvas>
+<div class="glow-orb glow-tl"></div>
+<div class="glow-orb glow-br"></div>
+<div class="container">
+
+<div class="header">
+  <div class="logo-row">
+    <svg width="28" height="28" viewBox="0 0 36 36" fill="none"><polygon points="18,2 32,10 32,26 18,34 4,26 4,10" fill="none" stroke="#4F8EF7" stroke-width="1.5"/><polygon points="18,8 27,13 27,23 18,28 9,23 9,13" fill="rgba(79,142,247,0.15)" stroke="#4F8EF7" stroke-width="1"/><circle cx="18" cy="18" r="3" fill="#4F8EF7"/></svg>
+    <span class="logo-text">Vibe Code School</span>
+  </div>
+  <div class="week-pill">Semana 3</div>
+  <h1>Integrações Feitas e <span>Landing Page Pronta</span></h1>
+  <p>O app funciona. Agora ele precisa cobrar, guardar dados e ter uma porta de entrada que converta.</p>
+  <div class="prog-wrap"><div class="prog-fill" id="prog"></div></div>
+  <p class="prog-label"><span id="pct">0%</span> concluído</p>
+</div>
+
+<p class="section-label">Questões</p>
+<div class="questions" id="questions">
+<div class="q-card" data-idx="0" data-type="mc" data-correct="1">
+  <div class="q-head">
+    <div class="q-num">1</div>
+    <div class="q-text">Para que serve o banco de dados no seu SaaS?</div>
+    <span class="q-type teoria">Teoria</span>
+  </div>
+  <div class="q-options">
+    <div class="opt" onclick="pickOpt(this,0,0)" data-idx="0">
+      <div class="opt-circle">A</div>
+      <span class="opt-text">Só para guardar as senhas dos usuários</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,0,1)" data-idx="1">
+      <div class="opt-circle">B</div>
+      <span class="opt-text">Para persistir todas as informações do usuário entre sessões e garantir que os dados não se percam ao recarregar a página</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,0,2)" data-idx="2">
+      <div class="opt-circle">C</div>
+      <span class="opt-text">Para deixar o app mais rápido visualmente</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,0,3)" data-idx="3">
+      <div class="opt-circle">D</div>
+      <span class="opt-text">É opcional na fase de validação</span>
+    </div>
+  </div>
+  <div class="q-feedback" id="fb-0"></div>
+</div>
+<div class="q-card" data-idx="1" data-type="mc" data-correct="1">
+  <div class="q-head">
+    <div class="q-num">2</div>
+    <div class="q-text">Qual é a vantagem de testar o pagamento com cartão de teste antes de publicar?</div>
+    <span class="q-type teoria">Teoria</span>
+  </div>
+  <div class="q-options">
+    <div class="opt" onclick="pickOpt(this,1,0)" data-idx="0">
+      <div class="opt-circle">A</div>
+      <span class="opt-text">É obrigação legal em todos os países</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,1,1)" data-idx="1">
+      <div class="opt-circle">B</div>
+      <span class="opt-text">Permite identificar erros no fluxo de cobrança sem movimentar dinheiro real e sem frustrar clientes reais</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,1,2)" data-idx="2">
+      <div class="opt-circle">C</div>
+      <span class="opt-text">O Stripe exige isso para liberar a conta</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,1,3)" data-idx="3">
+      <div class="opt-circle">D</div>
+      <span class="opt-text">Não há vantagem real, é só um passo burocrático</span>
+    </div>
+  </div>
+  <div class="q-feedback" id="fb-1"></div>
+</div>
+<div class="q-card" data-idx="2" data-type="open">
+  <div class="q-head">
+    <div class="q-num">3</div>
+    <div class="q-text">Descreva como está configurada a cobrança no seu app. Qual plano você criou, qual é o valor e como o usuário chega até o checkout?</div>
+    <span class="q-type pratica">Prática</span>
+  </div>
+  <div class="q-open">
+    <textarea placeholder="Descreva sua resposta com base no seu projeto..." id="open-2"></textarea>
+    <div style="display:flex;align-items:center;">
+      <button class="save-btn" onclick="saveOpen(2)">Salvar resposta</button>
+      <span class="saved-indicator" id="saved-2">
+        <svg width="12" height="12" viewBox="0 0 12 10" fill="none" stroke="#4fc878" stroke-width="2" stroke-linecap="round"><polyline points="1,5 4,8 11,1"/></svg>
+        Salvo
+      </span>
+    </div>
+  </div>
+</div>
+<div class="q-card" data-idx="3" data-type="mc" data-correct="1">
+  <div class="q-head">
+    <div class="q-num">4</div>
+    <div class="q-text">Qual é o elemento mais importante de uma landing page que converte?</div>
+    <span class="q-type teoria">Teoria</span>
+  </div>
+  <div class="q-options">
+    <div class="opt" onclick="pickOpt(this,3,0)" data-idx="0">
+      <div class="opt-circle">A</div>
+      <span class="opt-text">Um design elaborado com muitas animações</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,3,1)" data-idx="1">
+      <div class="opt-circle">B</div>
+      <span class="opt-text">Um headline claro que comunica o resultado que o produto entrega para quem</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,3,2)" data-idx="2">
+      <div class="opt-circle">C</div>
+      <span class="opt-text">Depoimentos de clientes famosos</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,3,3)" data-idx="3">
+      <div class="opt-circle">D</div>
+      <span class="opt-text">Um contador de urgência com prazo para acabar</span>
+    </div>
+  </div>
+  <div class="q-feedback" id="fb-3"></div>
+</div>
+<div class="q-card" data-idx="4" data-type="mc" data-correct="2">
+  <div class="q-head">
+    <div class="q-num">5</div>
+    <div class="q-text">Qual deve ser o CTA principal da sua landing page nessa fase?</div>
+    <span class="q-type teoria">Teoria</span>
+  </div>
+  <div class="q-options">
+    <div class="opt" onclick="pickOpt(this,4,0)" data-idx="0">
+      <div class="opt-circle">A</div>
+      <span class="opt-text">Saiba mais</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,4,1)" data-idx="1">
+      <div class="opt-circle">B</div>
+      <span class="opt-text">Entre em contato</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,4,2)" data-idx="2">
+      <div class="opt-circle">C</div>
+      <span class="opt-text">Comece grátis, Teste por 7 dias ou Criar minha conta, algo que leve ao app imediatamente</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,4,3)" data-idx="3">
+      <div class="opt-circle">D</div>
+      <span class="opt-text">Inscreva-se para a lista de espera</span>
+    </div>
+  </div>
+  <div class="q-feedback" id="fb-4"></div>
+</div>
+<div class="q-card" data-idx="5" data-type="open">
+  <div class="q-head">
+    <div class="q-num">6</div>
+    <div class="q-text">Qual é o headline da sua landing page? Escreva aqui e explique por que você escolheu essa frase.</div>
+    <span class="q-type pratica">Prática</span>
+  </div>
+  <div class="q-open">
+    <textarea placeholder="Descreva sua resposta com base no seu projeto..." id="open-5"></textarea>
+    <div style="display:flex;align-items:center;">
+      <button class="save-btn" onclick="saveOpen(5)">Salvar resposta</button>
+      <span class="saved-indicator" id="saved-5">
+        <svg width="12" height="12" viewBox="0 0 12 10" fill="none" stroke="#4fc878" stroke-width="2" stroke-linecap="round"><polyline points="1,5 4,8 11,1"/></svg>
+        Salvo
+      </span>
+    </div>
+  </div>
+</div>
+<div class="q-card" data-idx="6" data-type="mc" data-correct="1">
+  <div class="q-head">
+    <div class="q-num">7</div>
+    <div class="q-text">O que é churn e por que ele importa desde o primeiro usuário?</div>
+    <span class="q-type teoria">Teoria</span>
+  </div>
+  <div class="q-options">
+    <div class="opt" onclick="pickOpt(this,6,0)" data-idx="0">
+      <div class="opt-circle">A</div>
+      <span class="opt-text">É o nome do painel de administração do Stripe</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,6,1)" data-idx="1">
+      <div class="opt-circle">B</div>
+      <span class="opt-text">É a taxa de cancelamento de assinantes. Importa porque receita perdida por churn cancela o crescimento de novos assinantes</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,6,2)" data-idx="2">
+      <div class="opt-circle">C</div>
+      <span class="opt-text">É uma métrica de tráfego que mede cliques em anúncios</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,6,3)" data-idx="3">
+      <div class="opt-circle">D</div>
+      <span class="opt-text">É o prazo de validade de um plano gratuito</span>
+    </div>
+  </div>
+  <div class="q-feedback" id="fb-6"></div>
+</div>
+<div class="q-card" data-idx="7" data-type="mc" data-correct="1">
+  <div class="q-head">
+    <div class="q-num">8</div>
+    <div class="q-text">Por que o onboarding do usuário é crítico para a retenção?</div>
+    <span class="q-type teoria">Teoria</span>
+  </div>
+  <div class="q-options">
+    <div class="opt" onclick="pickOpt(this,7,0)" data-idx="0">
+      <div class="opt-circle">A</div>
+      <span class="opt-text">Não é. O que importa é o preço</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,7,1)" data-idx="1">
+      <div class="opt-circle">B</div>
+      <span class="opt-text">Porque usuários que não chegam ao primeiro resultado rápido cancelam antes de renovar</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,7,2)" data-idx="2">
+      <div class="opt-circle">C</div>
+      <span class="opt-text">Porque o Google penaliza sites com onboarding ruim</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,7,3)" data-idx="3">
+      <div class="opt-circle">D</div>
+      <span class="opt-text">Porque facilita a integração com outras ferramentas</span>
+    </div>
+  </div>
+  <div class="q-feedback" id="fb-7"></div>
+</div>
+<div class="q-card" data-idx="8" data-type="open">
+  <div class="q-head">
+    <div class="q-num">9</div>
+    <div class="q-text">Teste seu app como se fosse um cliente real chegando pela primeira vez. Descreva o que funcionou bem e o que você ajustaria no fluxo de onboarding.</div>
+    <span class="q-type pratica">Prática</span>
+  </div>
+  <div class="q-open">
+    <textarea placeholder="Descreva sua resposta com base no seu projeto..." id="open-8"></textarea>
+    <div style="display:flex;align-items:center;">
+      <button class="save-btn" onclick="saveOpen(8)">Salvar resposta</button>
+      <span class="saved-indicator" id="saved-8">
+        <svg width="12" height="12" viewBox="0 0 12 10" fill="none" stroke="#4fc878" stroke-width="2" stroke-linecap="round"><polyline points="1,5 4,8 11,1"/></svg>
+        Salvo
+      </span>
+    </div>
+  </div>
+</div>
+<div class="q-card" data-idx="9" data-type="mc" data-correct="2">
+  <div class="q-head">
+    <div class="q-num">10</div>
+    <div class="q-text">Antes de começar a semana de tráfego, o que precisa estar 100% funcionando?</div>
+    <span class="q-type teoria">Teoria</span>
+  </div>
+  <div class="q-options">
+    <div class="opt" onclick="pickOpt(this,9,0)" data-idx="0">
+      <div class="opt-circle">A</div>
+      <span class="opt-text">O design precisa estar perfeito em todos os dispositivos</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,9,1)" data-idx="1">
+      <div class="opt-circle">B</div>
+      <span class="opt-text">Você precisa ter pelo menos 100 seguidores no Instagram</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,9,2)" data-idx="2">
+      <div class="opt-circle">C</div>
+      <span class="opt-text">O fluxo completo: cadastro, uso do produto e pagamento funcionando sem erro</span>
+    </div>
+    <div class="opt" onclick="pickOpt(this,9,3)" data-idx="3">
+      <div class="opt-circle">D</div>
+      <span class="opt-text">O produto precisa ter versão mobile nativa publicada nas lojas</span>
+    </div>
+  </div>
+  <div class="q-feedback" id="fb-9"></div>
+</div>
+</div>
+
+<p class="section-label">Exercício Prático</p>
+<div class="practical-card">
+  <div class="practical-header">
+    <div class="practical-icon">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#4F8EF7" stroke-width="1.8" stroke-linecap="round"><path d="M9 1v16M1 9h16"/><circle cx="9" cy="9" r="4"/></svg>
+    </div>
+    <div>
+      <div class="practical-title">Entrega da Semana 3</div>
+      <div class="practical-subtitle">Entrega obrigatória da semana</div>
+    </div>
+  </div>
+  <div class="practical-desc">Confirme o que está funcionando: <strong>banco de dados conectado</strong>, <strong>pagamento testado</strong>, <strong>landing page publicada</strong> e <strong>deploy feito</strong>. Descreva o estado atual do produto e cole o link da landing page.</div>
+  <textarea placeholder="Ex: Banco de dados conectado com Supabase, tabelas de usuário e agendamentos funcionando. Stripe configurado com plano mensal de R$49/mês, testei com cartão de teste e a cobrança passou. Landing page publicada em meuclinicaapp.com.br. Deploy feito, o app está acessível no ar..." id="practical-text"></textarea>
+  <div class="practical-actions">
+    <button class="submit-btn" onclick="submitPractical()">Confirmar entrega</button>
+  </div>
+  <div class="submit-confirm" id="submit-confirm">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+      <svg width="13" height="11" viewBox="0 0 12 10" fill="none" stroke="#4fc878" stroke-width="2" stroke-linecap="round"><polyline points="1,5 4,8 11,1"/></svg>
+      <span style="font-size:12px;color:#7de0a0;font-weight:600;">Entrega registrada nesta sessão.</span>
+    </div>
+    <p style="font-size:11px;color:var(--text-muted);line-height:1.5;">Guarde uma cópia do que você escreveu. Ao fechar ou recarregar a página, o texto não será salvo.</p>
+  </div>
+</div>
+
+<div class="footer"><p>Vibe Code School &nbsp;·&nbsp; <strong>Laboratório Semana 3</strong></p></div>
+</div>
+<script>
+// mesh
+const cv=document.getElementById('mesh'),cx=cv.getContext('2d');
+let W,H,pts=[];const C=14,R=9;
+function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;pts=[];const cw=W/(C-1),ch=H/(R-1);for(let r=0;r<R;r++)for(let c=0;c<C;c++)pts.push({x:c*cw,y:r*ch,ox:c*cw,oy:r*ch,a:6+Math.random()*10,p:Math.random()*Math.PI*2,s:0.003+Math.random()*0.004});}
+function draw(t){cx.clearRect(0,0,W,H);for(const p of pts){p.x=p.ox+Math.sin(t*p.s+p.p)*p.a;p.y=p.oy+Math.cos(t*p.s+p.p*1.3)*p.a*0.6;}
+cx.lineWidth=0.5;
+for(let r=0;r<R;r++){cx.beginPath();for(let c=0;c<C;c++){const p=pts[r*C+c];c===0?cx.moveTo(p.x,p.y):cx.lineTo(p.x,p.y);}cx.strokeStyle='rgba(79,142,247,'+(0.05+(r/R)*0.09)+')';cx.stroke();}
+for(let c=0;c<C;c++){cx.beginPath();for(let r=0;r<R;r++){const p=pts[r*C+c];r===0?cx.moveTo(p.x,p.y):cx.lineTo(p.x,p.y);}cx.strokeStyle='rgba(79,142,247,'+(0.04+(c/C)*0.07)+')';cx.stroke();}
+for(const p of pts){cx.beginPath();cx.arc(p.x,p.y,1.1,0,Math.PI*2);cx.fillStyle='rgba(79,142,247,0.22)';cx.fill();}}
+let t=0;function animate(){t++;draw(t);requestAnimationFrame(animate);}
+window.addEventListener('resize',resize);resize();animate();
+
+// quiz logic
+const feedbacks = ["Sem banco de dados, seu app perde todas as informações quando o usuário fecha o navegador. É o banco que transforma uma interface em um produto real. Sem ele, não existe SaaS.","Um erro no fluxo de pagamento com um cliente real significa receita perdida e confiança quebrada. Testar com cartões de teste é o que separa quem lança com qualidade de quem lança e quebra.",null,"O headline é o único elemento que todo visitante lê. Se ele não comunicar imediatamente o que o produto faz e para quem, o resto da página não importa. Clareza converte mais do que criatividade.","Se o produto já está funcionando e cobrando, o CTA deve levar diretamente para o cadastro ou trial. Lista de espera é para quando o produto ainda não está pronto. Nessa fase, você quer conversão direta.",null,"Churn alto significa que você precisa adquirir novos clientes só para manter a receita no mesmo lugar. Desde o primeiro usuário, preste atenção em por que as pessoas cancelam. Essa informação é o que melhora o produto.","O momento mais frágil do ciclo de vida de um usuário é entre o cadastro e o primeiro resultado concreto. Se ele não sentir valor rápido, cancela. Um bom onboarding é o que garante que o usuário chegue ao \"aha moment\".",null,"Mandar tráfego para um produto com o fluxo de pagamento quebrado é desperdiçar a atenção que você vai gerar. Antes de qualquer esforço de aquisição, o funil precisa estar fechado e testado do início ao fim."];
+const done = {};
+let practicalDone = false;
+
+function pickOpt(el, qIdx, optIdx){
+  const card = document.querySelector('.q-card[data-idx="'+qIdx+'"]');
+  if(card.dataset.answered) return;
+  card.dataset.answered = '1';
+  const correct = parseInt(card.dataset.correct);
+  const opts = card.querySelectorAll('.opt');
+  opts.forEach((o,i) => {
+    if(i === correct) o.classList.add('correct');
+    else if(i === optIdx && optIdx !== correct) o.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb-'+qIdx);
+  if(optIdx === correct){
+    fb.className = 'q-feedback show ok';
+    fb.textContent = feedbacks[qIdx] || 'Correto.';
+    done[qIdx] = true;
+  } else {
+    fb.className = 'q-feedback show err';
+    fb.textContent = 'Não é essa. A resposta correta está destacada acima. ' + (feedbacks[qIdx] || '');
+    done[qIdx] = true;
+  }
+  updateProgress();
+}
+
+function saveOpen(idx){
+  const ta = document.getElementById('open-'+idx);
+  if(!ta.value.trim()) return;
+  const ind = document.getElementById('saved-'+idx);
+  ind.classList.add('show');
+  done[idx] = true;
+  setTimeout(()=>ind.classList.remove('show'), 2500);
+  updateProgress();
+}
+
+function submitPractical(){
+  const ta = document.getElementById('practical-text');
+  if(!ta.value.trim()) return;
+  practicalDone = true;
+  const conf = document.getElementById('submit-confirm');
+  conf.classList.add('show');
+  updateProgress();
+}
+
+function updateProgress(){
+  const totalItems = 11;
+  const doneCount = Object.keys(done).length + (practicalDone ? 1 : 0);
+  const pct = Math.round((doneCount / totalItems) * 100);
+  document.getElementById('prog').style.width = pct + '%';
+  document.getElementById('pct').textContent = pct + '%';
+}
+</script>
+</body></html>
